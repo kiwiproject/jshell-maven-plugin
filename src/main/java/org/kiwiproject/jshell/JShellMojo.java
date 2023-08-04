@@ -25,14 +25,20 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 import javax.tools.Tool;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
@@ -88,13 +94,16 @@ public class JShellMojo extends AbstractMojo {
     @Parameter
     private Map<String, String> properties;
 
+    @Parameter(property = "jshell.non-interactive")
+    private boolean nonInteractive = false;
+
     public void execute() throws MojoExecutionException {
         Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
-        ClassLoader classLoader = module.get().getClassLoader();
+        Optional<ClassLoader> classLoader = module.map(Module::getClassLoader);
         // Until https://issues.apache.org/jira/browse/MNG-6371 is resolved
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(classLoader);
+        try (InputStream input = getInputStream()) {
+            classLoader.ifPresent(cl -> Thread.currentThread().setContextClassLoader(cl));
             ServiceLoader<Tool> sl = ServiceLoader.load(javax.tools.Tool.class);
             Tool jshell = sl.stream()
                     .filter(a -> a.get().name().equals("jshell"))
@@ -102,12 +111,46 @@ public class JShellMojo extends AbstractMojo {
                     .orElseThrow(() -> new RuntimeException("No JShell service providers found!"))
                     .get();
             String[] args = addArguments();
-            int exitCode = jshell.run(System.in, System.out, System.err, args);
+
+            int exitCode = jshell.run(input, System.out, System.err, args);
             if (exitCode != 0) {
                 throw new MojoExecutionException("An error was encountered while executing. Exit code:" + exitCode);
             }
+        } catch (IOException e) {
+            throw new MojoExecutionException("Unable to read input script file(s)", e);
         } finally {
             Thread.currentThread().setContextClassLoader(contextClassLoader);
+        }
+    }
+
+    private InputStream getInputStream() {
+        if (nonInteractive) {
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Non-interactive mode. inject script in stdin:" + String.join(", ", scripts));
+            }
+            return new SequenceInputStream(Collections.enumeration(
+                    scripts.stream()
+                            .map(this::scriptToInputStream)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList())
+            ));
+        } else {
+            return System.in;
+        }
+    }
+
+    private InputStream scriptToInputStream(String scriptPath) {
+        final Path path = Paths.get(scriptPath);
+        if (!Files.isRegularFile(path)) {
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Not a regular file: " + scriptPath);
+            }
+            return null;
+        }
+        try {
+            return new BufferedInputStream(Files.newInputStream(path));
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Unable to read input script file(s)", e);
         }
     }
 
@@ -190,7 +233,11 @@ public class JShellMojo extends AbstractMojo {
             this.properties.forEach((key, value) -> args.add("-R -D" + key + "=" + value));
         }
 
-        args.addAll(scripts);
+        if (nonInteractive) {
+            args.add("-");
+        } else {
+            args.addAll(scripts);
+        }
 
         return args.toArray(new String[0]);
     }
