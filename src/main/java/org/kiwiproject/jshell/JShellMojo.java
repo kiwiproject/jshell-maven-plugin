@@ -37,6 +37,8 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 
+import static java.util.Optional.ofNullable;
+
 
 @Mojo(name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST)
 public class JShellMojo extends AbstractMojo {
@@ -139,9 +141,10 @@ public class JShellMojo extends AbstractMojo {
                         getLog().warn(String.format(
                                 "Removing: %s from the classpath.%n" +
                                         "If this is unexpected, please make sure you correctly build the project beforehand by invoking the correct Maven build phase (usually `install`, `test-compile` or `compile`). For example:%n" +
-                                        "mvn test-compile org.kiwiproject:jshell-maven-plugin:run%n" +
+                                        "mvn test-compile org.kiwiproject:jshell-maven-plugin:%s:run%n" +
                                         "For more information visit https://github.com/kiwiproject/jshell-maven-plugin",
-                                s
+                                s,
+                                ofNullable(this.getClass().getPackage().getImplementationVersion()).orElse("RELEASE")
                         ));
                         return false;
                     }
