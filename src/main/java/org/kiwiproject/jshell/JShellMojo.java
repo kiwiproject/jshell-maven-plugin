@@ -136,11 +136,13 @@ public class JShellMojo extends AbstractMojo {
                 .filter(s -> {
                     Path path = Paths.get(s);
                     if (Files.notExists(path)) {
-                        getLog().warn("Removing: " + s + " from the classpath." + System.lineSeparator() +
-                                "If this is unexpected, please make sure you correctly build the project beforehand by invoking the correct Maven build phase (usually `install`, `test-compile` or `compile`). For example:" + System.lineSeparator() +
-                                "mvn test-compile org.kiwiproject:jshell-maven-plugin:run" + System.lineSeparator() +
-                                "For more information visit https://github.com/kiwiproject/jshell-maven-plugin"
-                        );
+                        getLog().warn(String.format(
+                                "Removing: %s from the classpath.%n" +
+                                        "If this is unexpected, please make sure you correctly build the project beforehand by invoking the correct Maven build phase (usually `install`, `test-compile` or `compile`). For example:%n" +
+                                        "mvn test-compile org.kiwiproject:jshell-maven-plugin:run%n" +
+                                        "For more information visit https://github.com/kiwiproject/jshell-maven-plugin",
+                                s
+                        ));
                         return false;
                     }
                     if (Files.isDirectory(path)) {
