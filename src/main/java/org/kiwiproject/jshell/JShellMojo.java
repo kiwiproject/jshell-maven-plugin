@@ -17,6 +17,7 @@
 package org.kiwiproject.jshell;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -97,7 +98,20 @@ public class JShellMojo extends AbstractMojo {
     @Parameter(property = "jshell.non-interactive")
     private boolean nonInteractive = false;
 
+    @Parameter(
+        defaultValue = "${session}",
+        readonly = true,
+        required = true
+    )
+    private MavenSession session;
+
+    @Override
     public void execute() throws MojoExecutionException {
+        List<String> selectedProjects = session.getRequest().getSelectedProjects();
+        if (!selectedProjects.isEmpty() && !selectedProjects.contains(session.getCurrentProject().getArtifactId())) {
+            getLog().debug("Skipping Shell for: " + session.getCurrentProject().getArtifactId());
+            return;
+        }
         Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
         Optional<ClassLoader> classLoader = module.map(Module::getClassLoader);
         // Until https://issues.apache.org/jira/browse/MNG-6371 is resolved
