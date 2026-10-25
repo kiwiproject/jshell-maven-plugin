@@ -16,11 +16,13 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      # maven-core determines the minimum supported Maven version, so only
-      # take minor and patch updates (3.9.x). Maven 4 is a deliberate decision.
+      # maven-core determines the API we compile against, and therefore the minimum
+      # supported Maven version, so only take patch updates. Moving to a new minor
+      # or major version of Maven is a deliberate decision.
       - dependency-name: "org.apache.maven:maven-core"
         update-types:
           - "version-update:semver-major"
+          - "version-update:semver-minor"
     assignees:
       - "sleberknight"
       - "chrisrohr"
