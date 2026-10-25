@@ -70,11 +70,11 @@
 
         <dependency-check-maven.version>12.1.1</dependency-check-maven.version>
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
-        <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
-        <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
+        <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
+        <maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
         <maven-javadoc-plugin.version>3.12.2</maven-javadoc-plugin.version>
-        <maven-plugin-plugin.version>3.15.1</maven-plugin-plugin.version>
-        <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
+        <maven-plugin-plugin.version>3.16.0</maven-plugin-plugin.version>
+        <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
 
