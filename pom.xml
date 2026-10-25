@@ -29,6 +29,12 @@
         <developer>
             <name>Sean McNamara</name>
         </developer>
+        <developer>
+            <name>Scott Leberknight</name>
+            <organization>Kiwi Project</organization>
+            <organizationUrl>https://github.com/kiwiproject</organizationUrl>
+            <url>https://github.com/sleberknight</url>
+        </developer>
     </developers>
 
     <scm>
