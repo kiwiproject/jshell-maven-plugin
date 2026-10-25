@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * The command line arguments passed to JShell.
  *
- * @param classpath      the class path, or null to not pass {@code --class-path}
+ * @param classpath      the class path, or null or empty to not pass {@code --class-path}
  * @param modulePath     the module path, or null
  * @param addModules     the modules to add, or null
  * @param addExports     the exports to add, or null
@@ -27,7 +27,7 @@ record JShellArguments(String classpath,
 
     String[] toArray() {
         List<String> args = new ArrayList<>();
-        if (classpath != null) {
+        if (classpath != null && !classpath.isEmpty()) {
             args.add("--class-path");
             args.add(classpath);
         }

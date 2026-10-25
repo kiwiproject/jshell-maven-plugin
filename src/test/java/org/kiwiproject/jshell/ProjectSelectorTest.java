@@ -45,7 +45,7 @@ class ProjectSelectorTest {
     class MatchByCoordinates {
 
         @ParameterizedTest
-        @ValueSource(strings = {":foo", "foo", "com.acme:foo"})
+        @ValueSource(strings = {":foo", "com.acme:foo"})
         void shouldBeSelected_WhenSelectorMatchesArtifactId(String selector) {
             assertThat(isSelected(selector)).isTrue();
         }
@@ -54,6 +54,12 @@ class ProjectSelectorTest {
         @ValueSource(strings = {":bar", "bar", "com.acme:bar", "org.other:foo", "fo", ":fo"})
         void shouldNotBeSelected_WhenSelectorDoesNotMatch(String selector) {
             assertThat(isSelected(selector)).isFalse();
+        }
+
+        @Test
+        void shouldTreatSelectorWithoutColonAsPath_NotAsArtifactId() {
+            // Maven only treats a selector with a colon as coordinates, so "foo" means the path ./foo
+            assertThat(isSelected("foo")).isFalse();
         }
 
         @Test

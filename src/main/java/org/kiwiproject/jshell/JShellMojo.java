@@ -127,7 +127,7 @@ public class JShellMojo extends AbstractMojo {
         }
     }
 
-    private InputStream getInputStream() {
+    private InputStream getInputStream() throws IOException {
         return nonInteractive ? ScriptInput.sequence(scripts, getLog()) : System.in;
     }
 
@@ -161,8 +161,7 @@ public class JShellMojo extends AbstractMojo {
                             .collect(Collectors.toList())
             );
         }
-        return ClasspathFilter.filter(classpathElements, getLog()).stream()
-                .reduce("", (a, b) -> a + File.pathSeparator + b);
+        return String.join(File.pathSeparator, ClasspathFilter.filter(classpathElements, getLog()));
     }
 
     private String[] addArguments() {

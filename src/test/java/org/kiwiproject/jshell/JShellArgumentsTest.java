@@ -27,6 +27,11 @@ class JShellArgumentsTest {
     }
 
     @Test
+    void shouldNotAddClasspath_WhenItIsEmpty() {
+        assertThat(args("", null, null, null, List.of(), null, false, List.of()).toArray()).isEmpty();
+    }
+
+    @Test
     void shouldAddClasspath() {
         assertThat(args("a.jar:b.jar", null, null, null, List.of(), null, false, List.of()).toArray())
                 .containsExactly("--class-path", "a.jar:b.jar");

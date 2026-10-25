@@ -15,12 +15,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Runs the Mojo against the real JShell tool from the JDK running the tests, in non-interactive mode.
@@ -114,6 +116,29 @@ class JShellMojoTest {
         mojo.execute();
 
         assertThat(output()).contains(classes.toString());
+    }
+
+    @Test
+    void shouldPassPropertiesToTheRemoteVm() throws Exception {
+        set("properties", Map.of("greeting", "howdy"));
+        set("scripts", List.of(script("System.out.println(\"greeting=\" + System.getProperty(\"greeting\"))\n/exit\n")));
+
+        mojo.execute();
+
+        assertThat(output()).contains("greeting=howdy");
+    }
+
+    @Test
+    void shouldNotStartTheClasspathWithASeparator() throws Exception {
+        var classes = Files.createDirectory(dir.resolve("classes"));
+        set("testClasspathElements", List.of(classes.toString()));
+        set("scripts", List.of(script("System.out.println(\"cp=[\" + System.getProperty(\"java.class.path\") + \"]\")\n/exit\n")));
+
+        mojo.execute();
+
+        assertThat(output())
+                .contains("cp=[" + classes)
+                .doesNotContain("cp=[" + File.pathSeparator);
     }
 
     @Test

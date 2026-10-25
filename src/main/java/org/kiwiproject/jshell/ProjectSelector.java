@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 /**
  * Decides whether a project is selected by the Maven {@code -pl} (or {@code --projects}) option.
  * <p>
- * Each {@code -pl} entry can be {@code :artifactId}, {@code groupId:artifactId}, or a path relative
+ * Each {@code -pl} entry can be {@code :artifactId}, {@code groupId:artifactId}, or (when it has no colon) a path relative
  * to the root of the multi-module project, either to the module directory or to its POM file. Entries can have a {@code ?} prefix (optional); entries
  * with a {@code !} prefix are exclusions, which Maven already applies to the reactor, so they are ignored.
  */
@@ -43,7 +43,7 @@ final class ProjectSelector {
         Path normalizedProjectDir = normalizedProjectFile == null ? null : normalizedProjectFile.getParent();
 
         return selectors.stream().anyMatch(selector -> {
-            if (selector.equals(artifactId) || selector.equals(":" + artifactId) || selector.equals(groupId + ":" + artifactId)) {
+            if (selector.equals(":" + artifactId) || selector.equals(groupId + ":" + artifactId)) {
                 return true;
             }
             if (normalizedProjectFile == null || rootDir == null) {

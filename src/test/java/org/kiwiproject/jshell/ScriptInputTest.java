@@ -1,7 +1,7 @@
 package org.kiwiproject.jshell;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -100,8 +100,6 @@ class ScriptInputTest {
         assumeTrue(!Files.isReadable(unreadable), "permissions are not enforced, e.g. when running as root");
 
         var scripts = List.of(unreadable.toString());
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> ScriptInput.sequence(scripts, log))
-                .withMessage("Unable to read input script file(s)");
+        assertThatIOException().isThrownBy(() -> ScriptInput.sequence(scripts, log));
     }
 }
