@@ -137,12 +137,6 @@
                         </manifest>
                         <manifestEntries>
                             <Automatic-Module-Name>org.kiwiproject.jshell</Automatic-Module-Name>
-                            <!--suppress UnresolvedMavenProperty -->
-                            <Implementation-SCM-Revision-Number>${git.commit}</Implementation-SCM-Revision-Number>
-                            <!--suppress UnresolvedMavenProperty -->
-                            <Implementation-SCM-Revision-Date>${git.commit.timestamp.datetime}</Implementation-SCM-Revision-Date>
-                            <!--suppress UnresolvedMavenProperty -->
-                            <Implementation-Full-Version>${project.version}-${git.commit}</Implementation-Full-Version>
                             <Java-Version>${java.version}</Java-Version>
                             <Java-Vendor>${java.vendor}</Java-Vendor>
                         </manifestEntries>
