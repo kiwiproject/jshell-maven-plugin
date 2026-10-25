@@ -34,7 +34,6 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -154,7 +153,7 @@ public class JShellMojo extends AbstractMojo {
     }
 
     private InputStream scriptToInputStream(String scriptPath) {
-        final Path path = Paths.get(scriptPath);
+        final Path path = Path.of(scriptPath);
         if (!Files.isRegularFile(path)) {
             if (getLog().isDebugEnabled()) {
                 getLog().debug("Not a regular file: " + scriptPath);
@@ -228,7 +227,7 @@ public class JShellMojo extends AbstractMojo {
     private List<String> filterClasspath(List<String> cp) {
         return cp.stream()
                 .filter(s -> {
-                    Path path = Paths.get(s);
+                    Path path = Path.of(s);
                     if (Files.notExists(path)) {
                         getLog().info(String.format(
                                 "Removing: %s from the classpath.%n" +
