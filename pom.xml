@@ -2,20 +2,23 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.johnpoth</groupId>
+    <groupId>org.kiwiproject</groupId>
     <artifactId>jshell-maven-plugin</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>jshell-maven-plugin Maven Plugin</name>
     <description>JShell Maven Plugin</description>
-    <url>https://github.com/johnpoth/jshell-maven-plugin</url>
+    <url>https://github.com/kiwiproject/jshell-maven-plugin</url>
     <licenses>
         <license>
             <name>Apache License 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
         </license>
     </licenses>
+    <prerequisites>
+        <maven>3.6.3</maven>
+    </prerequisites>
 
     <developers>
         <developer>
@@ -26,12 +29,18 @@
         <developer>
             <name>Sean McNamara</name>
         </developer>
+        <developer>
+            <name>Scott Leberknight</name>
+            <organization>Kiwi Project</organization>
+            <organizationUrl>https://github.com/kiwiproject</organizationUrl>
+            <url>https://github.com/sleberknight</url>
+        </developer>
     </developers>
 
     <scm>
-        <url>scm:git:git@github.com:johnpoth/jshell-maven-plugin.git</url>
-        <connection>scm:git:git@github.com:johnpoth/jshell-maven-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:johnpoth/jshell-maven-plugin.git</developerConnection>
+        <url>https://github.com/kiwiproject/jshell-maven-plugin</url>
+        <connection>scm:git:git@github.com:kiwiproject/jshell-maven-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:kiwiproject/jshell-maven-plugin.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
     <distributionManagement>
@@ -46,27 +55,36 @@
     </distributionManagement>
 
     <properties>
+        <!-- Configuring for Reproducible Builds (cf. https://maven.apache.org/guides/mini/guide-reproducible-builds.html) -->
+        <!--suppress UnresolvedMavenProperty -->
+        <project.build.outputTimestamp>${git.commit.timestamp.datetime}</project.build.outputTimestamp>
+
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <!-- Override the version from maven-core, to fix CVE-2025-67030 -->
+            <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-utils</artifactId>
+                <version>3.6.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.maven</groupId>
-            <artifactId>maven-plugin-api</artifactId>
-            <version>3.9.4</version>
+            <artifactId>maven-core</artifactId>
+            <version>3.9.9</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
-            <version>3.9.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-artifact</artifactId>
-            <version>3.9.4</version>
+            <version>3.15.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -77,7 +95,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.1.1</version>
                     <configuration>
                         <arguments>-Prelease</arguments>
                     </configuration>
@@ -85,7 +103,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.5.0</version>
+                    <version>3.12.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -93,7 +111,7 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>8.3.1</version>
+                <version>12.1.1</version>
                 <configuration>
                     <scanPlugins>true</scanPlugins>
                 </configuration>
@@ -101,7 +119,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.14.0</version>
                 <configuration>
                     <source>9</source>
                     <target>9</target>
@@ -110,7 +128,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.9.0</version>
+                <version>3.15.1</version>
                 <configuration>
                     <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
                 </configuration>
@@ -123,6 +141,25 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            <addBuildEnvironmentEntries>true</addBuildEnvironmentEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Automatic-Module-Name>org.kiwiproject.jshell</Automatic-Module-Name>
+                            <Java-Version>${java.version}</Java-Version>
+                            <Java-Vendor>${java.vendor}</Java-Vendor>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -134,7 +171,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.7</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>

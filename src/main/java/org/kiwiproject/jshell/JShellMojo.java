@@ -14,28 +14,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.johnpoth.jshell;
+package org.kiwiproject.jshell;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
 
 import javax.tools.Tool;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
+
+import static java.util.Optional.ofNullable;
 
 
 @Mojo(name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST)
@@ -86,13 +96,28 @@ public class JShellMojo extends AbstractMojo {
     @Parameter
     private Map<String, String> properties;
 
+    @Parameter(property = "jshell.non-interactive")
+    private boolean nonInteractive = false;
+
+    @Parameter(
+        defaultValue = "${session}",
+        readonly = true,
+        required = true
+    )
+    private MavenSession session;
+
+    @Override
     public void execute() throws MojoExecutionException {
+        if (!isSelectedByProjectList()) {
+            getLog().debug("Skipping JShell for: " + session.getCurrentProject().getArtifactId());
+            return;
+        }
         Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
-        ClassLoader classLoader = module.get().getClassLoader();
+        Optional<ClassLoader> classLoader = module.map(Module::getClassLoader);
         // Until https://issues.apache.org/jira/browse/MNG-6371 is resolved
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(classLoader);
+        try (InputStream input = getInputStream()) {
+            classLoader.ifPresent(cl -> Thread.currentThread().setContextClassLoader(cl));
             ServiceLoader<Tool> sl = ServiceLoader.load(javax.tools.Tool.class);
             Tool jshell = sl.stream()
                     .filter(a -> a.get().name().equals("jshell"))
@@ -100,13 +125,82 @@ public class JShellMojo extends AbstractMojo {
                     .orElseThrow(() -> new RuntimeException("No JShell service providers found!"))
                     .get();
             String[] args = addArguments();
-            int exitCode = jshell.run(System.in, System.out, System.err, args);
+
+            int exitCode = jshell.run(input, System.out, System.err, args);
             if (exitCode != 0) {
                 throw new MojoExecutionException("An error was encountered while executing. Exit code:" + exitCode);
             }
+        } catch (IOException e) {
+            throw new MojoExecutionException("Unable to read input script file(s)", e);
         } finally {
             Thread.currentThread().setContextClassLoader(contextClassLoader);
         }
+    }
+
+    private InputStream getInputStream() {
+        if (nonInteractive) {
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Non-interactive mode. inject script in stdin:" + String.join(", ", scripts));
+            }
+            return new SequenceInputStream(Collections.enumeration(
+                    scripts.stream()
+                            .map(this::scriptToInputStream)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList())
+            ));
+        } else {
+            return System.in;
+        }
+    }
+
+    private InputStream scriptToInputStream(String scriptPath) {
+        final Path path = Paths.get(scriptPath);
+        if (!Files.isRegularFile(path)) {
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Not a regular file: " + scriptPath);
+            }
+            return null;
+        }
+        try {
+            return new BufferedInputStream(Files.newInputStream(path));
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Unable to read input script file(s)", e);
+        }
+    }
+
+    /**
+     * Whether the current project is selected by the {@code -pl} option, or {@code -pl} was not used.
+     * <p>
+     * Each {@code -pl} entry can be {@code :artifactId}, {@code groupId:artifactId}, or a path relative
+     * to the root of the multi-module project. Entries can have a {@code ?} prefix (optional); entries
+     * with a {@code !} prefix are exclusions, which Maven already applies to the reactor, so they are ignored.
+     */
+    private boolean isSelectedByProjectList() {
+        List<String> selectors = session.getRequest().getSelectedProjects().stream()
+                .map(String::trim)
+                .map(selector -> selector.startsWith("?") ? selector.substring(1) : selector)
+                .filter(selector -> !selector.isEmpty() && !selector.startsWith("!"))
+                .collect(Collectors.toList());
+        if (selectors.isEmpty()) {
+            return true;
+        }
+
+        MavenProject project = session.getCurrentProject();
+        String artifactId = project.getArtifactId();
+        String groupId = project.getGroupId();
+        Path projectDir = project.getBasedir() == null ? null : project.getBasedir().toPath().toAbsolutePath().normalize();
+        File rootDir = session.getRequest().getMultiModuleProjectDirectory();
+
+        return selectors.stream().anyMatch(selector -> {
+            if (selector.equals(artifactId) || selector.equals(":" + artifactId) || selector.equals(groupId + ":" + artifactId)) {
+                return true;
+            }
+            if (projectDir == null || rootDir == null) {
+                return false;
+            }
+            Path selectedDir = rootDir.toPath().resolve(selector).toAbsolutePath().normalize();
+            return selectedDir.equals(projectDir) || selectedDir.resolve("pom.xml").equals(projectDir.resolve("pom.xml"));
+        });
     }
 
     private String buildClasspath() {
@@ -136,11 +230,14 @@ public class JShellMojo extends AbstractMojo {
                 .filter(s -> {
                     Path path = Paths.get(s);
                     if (Files.notExists(path)) {
-                        getLog().warn("Removing: " + s + " from the classpath." + System.lineSeparator() +
-                                "If this is unexpected, please make sure you correctly build the project beforehand by invoking the correct Maven build phase (usually `install`, `test-compile` or `compile`). For example:" + System.lineSeparator() +
-                                "mvn test-compile com.github.johnpoth:jshell-maven-plugin:1.3:run" + System.lineSeparator() +
-                                "For more information visit https://github.com/johnpoth/jshell-maven-plugin"
-                        );
+                        getLog().info(String.format(
+                                "Removing: %s from the classpath.%n" +
+                                        "If this is unexpected, please make sure you correctly build the project beforehand by invoking the correct Maven build phase (usually `install`, `test-compile` or `compile`). For example:%n" +
+                                        "mvn test-compile org.kiwiproject:jshell-maven-plugin:%s:run%n" +
+                                        "For more information visit https://github.com/kiwiproject/jshell-maven-plugin",
+                                s,
+                                ofNullable(this.getClass().getPackage().getImplementationVersion()).orElse("RELEASE")
+                        ));
                         return false;
                     }
                     if (Files.isDirectory(path)) {
@@ -149,7 +246,9 @@ public class JShellMojo extends AbstractMojo {
                     if (s.endsWith(".jar")) {
                         return true;
                     }
-                    getLog().debug("Removing: " + s + " from the classpath because it is unsupported in JShell.");
+                    if (getLog().isDebugEnabled()) {
+                        getLog().debug("Removing: " + s + " from the classpath because it is unsupported in JShell.");
+                    }
                     return false;
                 }).collect(Collectors.toList());
     }
@@ -183,7 +282,11 @@ public class JShellMojo extends AbstractMojo {
             this.properties.forEach((key, value) -> args.add("-R -D" + key + "=" + value));
         }
 
-        args.addAll(scripts);
+        if (nonInteractive) {
+            args.add("-");
+        } else {
+            args.addAll(scripts);
+        }
 
         return args.toArray(new String[0]);
     }
