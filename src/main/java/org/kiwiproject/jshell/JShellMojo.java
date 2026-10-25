@@ -133,13 +133,13 @@ public class JShellMojo extends AbstractMojo {
 
     private boolean isSelectedByProjectList() {
         MavenProject project = session.getCurrentProject();
-        File baseDir = project.getBasedir();
+        File pomFile = project.getFile();
         File rootDir = session.getRequest().getMultiModuleProjectDirectory();
         return ProjectSelector.isSelected(
                 session.getRequest().getSelectedProjects(),
                 project.getGroupId(),
                 project.getArtifactId(),
-                baseDir == null ? null : baseDir.toPath(),
+                pomFile == null ? null : pomFile.toPath(),
                 rootDir == null ? null : rootDir.toPath());
     }
 
