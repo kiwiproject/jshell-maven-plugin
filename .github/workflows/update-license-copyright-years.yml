@@ -17,4 +17,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: NOTICE
+          # Only update the Kiwi Project line, not the original copyright holder's line
+          transform: '(?<=modifications\s+copyright\s+)(?<from>\d{4})(-\d{4})?'
           labels: documentation
