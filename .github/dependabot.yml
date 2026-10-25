@@ -23,9 +23,6 @@ updates:
         update-types:
           - "version-update:semver-major"
           - "version-update:semver-minor"
-      # plexus-utils is provided by Maven at runtime and not used directly. It is only
-      # pinned to a fixed version to resolve a security alert, so do not update it.
-      - dependency-name: "org.codehaus.plexus:plexus-utils"
     assignees:
       - "sleberknight"
       - "chrisrohr"
