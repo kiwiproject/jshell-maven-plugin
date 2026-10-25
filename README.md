@@ -42,7 +42,7 @@ upstream and which we have included here.
 * The groupId changed from `com.github.johnpoth` to `org.kiwiproject`. The artifactId is still
   `jshell-maven-plugin` and the plugin prefix is still `jshell`, so `mvn jshell:run` works as before.
 * The first release is `2.0.0`, since you must change your POM.
-* Java 17 or later is now required (upstream supported Java 9 and later).
+* Java 17 or later is now required.
 * The project test classpath is now used by default (`testClasspath` is `true`), so make sure test classes are
   compiled, for example by running `mvn test-compile jshell:run`.
 * The Java package changed from `com.github.johnpoth.jshell` to `org.kiwiproject.jshell`, and `module-info.java` was
