@@ -8,7 +8,7 @@ Maven Plugin for the Java Shell Tool ( https://docs.oracle.com/javase/9/jshell/i
 
 [source,shell]
 ----
-$mvn compile com.github.johnpoth:jshell-maven-plugin:1.4:run
+$mvn compile org.kiwiproject:jshell-maven-plugin:2.0.0-SNAPSHOT:run
 |  Welcome to JShell -- Version 10
 |  For an introduction type: /help intro
 jshell>
@@ -26,19 +26,19 @@ jshell>
 To you use your project's test classpath, add *-DtestClasspath* to the command and make sure you have compiled your test classes:
 [source,shell]
 ----
-$mvn test-compile com.github.johnpoth:jshell-maven-plugin:1.4:run
+$mvn test-compile org.kiwiproject:jshell-maven-plugin:2.0.0-SNAPSHOT:run
 ----
 
 If you notice some resources missing, you may have to invoke the `install` phase instead:
 [source,shell]
 ----
-$mvn install com.github.johnpoth:jshell-maven-plugin:1.4:run -DskipTests
+$mvn install org.kiwiproject:jshell-maven-plugin:2.0.0-SNAPSHOT:run -DskipTests
 ----
 
 Once you project has been built properly, and you haven't updated your source files, you can skip the building phase and invoke the plugin directly:
 [source,shell]
 ----
-$mvn com.github.johnpoth:jshell-maven-plugin:1.4:run
+$mvn org.kiwiproject:jshell-maven-plugin:2.0.0-SNAPSHOT:run
 ----
 
 == Options
@@ -69,7 +69,7 @@ options| Add other options to JShell. See https://docs.oracle.com/javase/9/tools
 |===
 
 Reminder: plugin parameters when passed through the command line should be prefixed with 'jshell.' e.g:
- *mvn com.github.johnpoth:jshell-maven-plugin:1.4:run -Djshell.scripts="script0,script1"*
+ *mvn org.kiwiproject:jshell-maven-plugin:2.0.0-SNAPSHOT:run -Djshell.scripts="script0,script1"*
 
 == Adding to pom.xml
 
@@ -80,9 +80,9 @@ To use the plugin's shortened prefix *jshell*, declare the plugin in your pom.xm
 <pluginManagement>
   <plugins>
     <plugin>
-      <groupId>com.github.johnpoth</groupId>
+      <groupId>org.kiwiproject</groupId>
       <artifactId>jshell-maven-plugin</artifactId>
-      <version>1.4</version>
+      <version>2.0.0-SNAPSHOT</version>
     </plugin>
   </plugins>
 </pluginManagement>

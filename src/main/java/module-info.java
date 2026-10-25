@@ -1,4 +1,4 @@
-module com.github.johnpoth.jshell {
+module org.kiwiproject.jshell {
 
    requires jdk.jshell;
    /**not modules yet*/
@@ -6,7 +6,7 @@ module com.github.johnpoth.jshell {
    requires maven.plugin.annotations;
    requires maven.artifact;
 
-   exports com.github.johnpoth.jshell;
+   exports org.kiwiproject.jshell;
 
    uses javax.tools.Tool;
 }

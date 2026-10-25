@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.johnpoth.jshell;
+package org.kiwiproject.jshell;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
@@ -138,8 +138,8 @@ public class JShellMojo extends AbstractMojo {
                     if (Files.notExists(path)) {
                         getLog().warn("Removing: " + s + " from the classpath." + System.lineSeparator() +
                                 "If this is unexpected, please make sure you correctly build the project beforehand by invoking the correct Maven build phase (usually `install`, `test-compile` or `compile`). For example:" + System.lineSeparator() +
-                                "mvn test-compile com.github.johnpoth:jshell-maven-plugin:1.3:run" + System.lineSeparator() +
-                                "For more information visit https://github.com/johnpoth/jshell-maven-plugin"
+                                "mvn test-compile org.kiwiproject:jshell-maven-plugin:run" + System.lineSeparator() +
+                                "For more information visit https://github.com/kiwiproject/jshell-maven-plugin"
                         );
                         return false;
                     }
