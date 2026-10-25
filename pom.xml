@@ -75,6 +75,17 @@
         <maven-javadoc-plugin.version>3.12.2</maven-javadoc-plugin.version>
         <maven-plugin-plugin.version>3.15.1</maven-plugin-plugin.version>
         <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+        <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
+
+        <!-- Sonar properties -->
+        <sonar.projectKey>kiwiproject_jshell-maven-plugin</sonar.projectKey>
+        <sonar.moduleKey>${project.groupId}:${project.artifactId}</sonar.moduleKey>
+        <sonar.organization>kiwiproject</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <!-- Prevents the scanner from downloading a JRE from SonarCloud CDN, which
+             intermittently fails with HTTP 403. CI already provides Java. -->
+        <sonar.scanner.skipJreProvisioning>true</sonar.scanner.skipJreProvisioning>
     </properties>
 
     <dependencyManagement>
@@ -106,6 +117,16 @@
     <build>
         <pluginManagement>
             <plugins>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>${sonar-maven-plugin.version}</version>
+                </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
