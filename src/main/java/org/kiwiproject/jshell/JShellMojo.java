@@ -24,6 +24,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
 
 import javax.tools.Tool;
 import java.io.BufferedInputStream;
@@ -107,9 +108,8 @@ public class JShellMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        List<String> selectedProjects = session.getRequest().getSelectedProjects();
-        if (!selectedProjects.isEmpty() && !selectedProjects.contains(session.getCurrentProject().getArtifactId())) {
-            getLog().debug("Skipping Shell for: " + session.getCurrentProject().getArtifactId());
+        if (!isSelectedByProjectList()) {
+            getLog().debug("Skipping JShell for: " + session.getCurrentProject().getArtifactId());
             return;
         }
         Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
@@ -166,6 +166,41 @@ public class JShellMojo extends AbstractMojo {
         } catch (IOException e) {
             throw new IllegalArgumentException("Unable to read input script file(s)", e);
         }
+    }
+
+    /**
+     * Whether the current project is selected by the {@code -pl} option, or {@code -pl} was not used.
+     * <p>
+     * Each {@code -pl} entry can be {@code :artifactId}, {@code groupId:artifactId}, or a path relative
+     * to the root of the multi-module project. Entries can have a {@code ?} prefix (optional); entries
+     * with a {@code !} prefix are exclusions, which Maven already applies to the reactor, so they are ignored.
+     */
+    private boolean isSelectedByProjectList() {
+        List<String> selectors = session.getRequest().getSelectedProjects().stream()
+                .map(String::trim)
+                .map(selector -> selector.startsWith("?") ? selector.substring(1) : selector)
+                .filter(selector -> !selector.isEmpty() && !selector.startsWith("!"))
+                .collect(Collectors.toList());
+        if (selectors.isEmpty()) {
+            return true;
+        }
+
+        MavenProject project = session.getCurrentProject();
+        String artifactId = project.getArtifactId();
+        String groupId = project.getGroupId();
+        Path projectDir = project.getBasedir() == null ? null : project.getBasedir().toPath().toAbsolutePath().normalize();
+        File rootDir = session.getRequest().getMultiModuleProjectDirectory();
+
+        return selectors.stream().anyMatch(selector -> {
+            if (selector.equals(artifactId) || selector.equals(":" + artifactId) || selector.equals(groupId + ":" + artifactId)) {
+                return true;
+            }
+            if (projectDir == null || rootDir == null) {
+                return false;
+            }
+            Path selectedDir = rootDir.toPath().resolve(selector).toAbsolutePath().normalize();
+            return selectedDir.equals(projectDir) || selectedDir.resolve("pom.xml").equals(projectDir.resolve("pom.xml"));
+        });
     }
 
     private String buildClasspath() {
