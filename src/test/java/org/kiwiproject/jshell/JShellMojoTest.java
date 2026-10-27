@@ -2,11 +2,13 @@ package org.kiwiproject.jshell;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.AfterEach;
@@ -94,6 +96,15 @@ class JShellMojoTest {
         mojo.execute();
 
         assertThat(output()).contains("hello from jshell");
+    }
+
+    @Test
+    void shouldFail_WhenJShellExitsWithNonZeroExitCode() throws Exception {
+        set("scripts", List.of(script("/exit 3\n")));
+
+        assertThatThrownBy(() -> mojo.execute())
+                .isExactlyInstanceOf(MojoExecutionException.class)
+                .hasMessageContaining("Exit code:3");
     }
 
     @Test
