@@ -106,7 +106,10 @@ public class JShellMojo extends AbstractMojo {
         Optional<ClassLoader> classLoader = module.map(Module::getClassLoader);
         // Until https://issues.apache.org/jira/browse/MNG-6371 is resolved
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        try (InputStream input = getInputStream()) {
+        // Only close the script streams we open. Standard input must stay open and be passed to JShell as-is,
+        // since closing it would leave every later module in a multi-module build without any input.
+        try (InputStream scriptInput = openScriptInput()) {
+            InputStream input = nonInteractive ? scriptInput : System.in;
             classLoader.ifPresent(cl -> Thread.currentThread().setContextClassLoader(cl));
             ServiceLoader<Tool> sl = ServiceLoader.load(javax.tools.Tool.class);
             Tool jshell = sl.stream()
@@ -127,8 +130,12 @@ public class JShellMojo extends AbstractMojo {
         }
     }
 
-    private InputStream getInputStream() throws IOException {
-        return nonInteractive ? ScriptInput.sequence(scripts, getLog()) : System.in;
+    /**
+     * Returns the scripts as one stream in non-interactive mode, otherwise null. A null resource is
+     * allowed in try-with-resources and is simply not closed.
+     */
+    private InputStream openScriptInput() throws IOException {
+        return nonInteractive ? ScriptInput.sequence(scripts, getLog()) : null;
     }
 
     private boolean isSelectedByProjectList() {
