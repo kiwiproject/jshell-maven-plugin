@@ -91,6 +91,41 @@ plugin directly:
 mvn jshell:run
 ```
 
+## Multi-module projects
+
+In a multi-module build, Maven runs the goal once for each module, so by default JShell is started once for each
+module, one after the other. This has some limitations:
+
+* Each JShell session only sees the classes and dependencies of its own module. There is no way to get the classes
+  of all modules in a single session.
+* A session is started for every module, including parent POM modules that have no classes of their own. You have to
+  exit each one (for example with `/exit`) before the next one starts.
+* The modules must be built first, which is why the examples use `test-compile`. Without that, the `target/classes`
+  and `target/test-classes` directories do not exist and are removed from the class path.
+
+To start JShell in just one module, select it with Maven's `-pl` (`--projects`) option. The other modules are skipped.
+You can select a module by `:artifactId`, by `groupId:artifactId`, or by its directory:
+
+```shell
+mvn test-compile jshell:run -pl :my-module
+mvn test-compile jshell:run -pl com.acme:my-module
+mvn test-compile jshell:run -pl modules/my-module
+```
+
+If the module depends on other modules in the same build, add `-am` (`--also-make`) so that those modules are built
+too. JShell is still only started in the module you selected with `-pl`, and the other modules' classes are on its
+class path:
+
+```shell
+mvn test-compile jshell:run -pl :my-module -am
+```
+
+You can also exclude modules. Quote the argument so that your shell does not interpret the `!`:
+
+```shell
+mvn test-compile jshell:run -pl '!my-parent,!my-other-module'
+```
+
 ## Options
 
 | Name                | Description                                                         | Default value |
