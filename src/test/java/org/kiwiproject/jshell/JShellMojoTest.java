@@ -104,7 +104,7 @@ class JShellMojoTest {
 
         assertThatThrownBy(() -> mojo.execute())
                 .isExactlyInstanceOf(MojoExecutionException.class)
-                .hasMessageContaining("Exit code:3");
+                .hasMessageContaining("Exit code: 3");
     }
 
     @Test

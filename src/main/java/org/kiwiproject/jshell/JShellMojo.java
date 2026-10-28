@@ -106,22 +106,16 @@ public class JShellMojo extends AbstractMojo {
         Optional<ClassLoader> classLoader = module.map(Module::getClassLoader);
         // Until https://issues.apache.org/jira/browse/MNG-6371 is resolved
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        // Only close the script streams we open. Standard input must stay open and be passed to JShell as-is,
-        // since closing it would leave every later module in a multi-module build without any input.
-        try (InputStream scriptInput = openScriptInput()) {
-            InputStream input = nonInteractive ? scriptInput : System.in;
+        try {
             classLoader.ifPresent(cl -> Thread.currentThread().setContextClassLoader(cl));
-            ServiceLoader<Tool> sl = ServiceLoader.load(javax.tools.Tool.class);
-            Tool jshell = sl.stream()
-                    .filter(a -> a.get().name().equals("jshell"))
-                    .findAny()
-                    .orElseThrow(() -> new RuntimeException("No JShell service providers found!"))
-                    .get();
-            String[] args = addArguments();
-
-            int exitCode = jshell.run(input, System.out, System.err, args);
-            if (exitCode != 0) {
-                throw new MojoExecutionException("An error was encountered while executing. Exit code:" + exitCode);
+            if (nonInteractive) {
+                try (InputStream scriptInput = ScriptInput.sequence(scripts, getLog())) {
+                    runJShell(scriptInput);
+                }
+            } else {
+                // Standard input must stay open and be passed to JShell as-is. Closing it would leave every
+                // later module in a multi-module build without any input.
+                runJShell(System.in);
             }
         } catch (IOException e) {
             throw new MojoExecutionException("Unable to read input script file(s)", e);
@@ -130,12 +124,19 @@ public class JShellMojo extends AbstractMojo {
         }
     }
 
-    /**
-     * Returns the scripts as one stream in non-interactive mode, otherwise null. A null resource is
-     * allowed in try-with-resources and is simply not closed.
-     */
-    private InputStream openScriptInput() throws IOException {
-        return nonInteractive ? ScriptInput.sequence(scripts, getLog()) : null;
+    private void runJShell(InputStream input) throws MojoExecutionException {
+        ServiceLoader<Tool> sl = ServiceLoader.load(javax.tools.Tool.class);
+        Tool jshell = sl.stream()
+                .filter(a -> a.get().name().equals("jshell"))
+                .findAny()
+                .orElseThrow(() -> new RuntimeException("No JShell service providers found!"))
+                .get();
+        String[] args = addArguments();
+
+        int exitCode = jshell.run(input, System.out, System.err, args);
+        if (exitCode != 0) {
+            throw new MojoExecutionException("An error was encountered while executing. Exit code: " + exitCode);
+        }
     }
 
     private boolean isSelectedByProjectList() {
