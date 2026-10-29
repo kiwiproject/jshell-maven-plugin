@@ -41,14 +41,16 @@ upstream and which we have included here.
 
 * The groupId changed from `com.github.johnpoth` to `org.kiwiproject`. The artifactId is still
   `jshell-maven-plugin` and the plugin prefix is still `jshell`, so `mvn jshell:run` works as before.
-* The first release is `2.0.0`, since you must change your POM.
-* Java 17 or later is required.
-* The project test classpath is now used by default (`testClasspath` is `true`), so make sure test classes are
+* The first release is `2.0.0`, since the new groupId means you must update your POM.
+* Java 17 or later and Maven 3.6.3 or later are required.
+* The project test classpath is now used by default (`jshell.testClasspath` is `true`), so make sure test classes are
   compiled, for example by running `mvn test-compile jshell:run`.
 * The Java package changed from `com.github.johnpoth.jshell` to `org.kiwiproject.jshell`, and `module-info.java` was
   removed in favor of an `Automatic-Module-Name` of `org.kiwiproject.jshell`.
 * Multi-module builds respect `-pl`. Without it, JShell is started once for each module, as before.
-* A new `interactive` option, which is `true` by default, can be set to `false` to run scripts and then exit.
+* A new `interactive` option, which is `true` by default, can be set to `false` to run scripts and then exit. It
+  replaces the `non-interactive` option from an upstream contribution that was never released, so it was not in 1.4
+  or any earlier version.
 * The undocumented `rcp` and `trcp` properties were removed. The project's runtime and test class path elements are
   now read-only. Use `class-path` to add your own entries.
 * The `runtimeClasspath` and `testClasspath` properties now have the `jshell.` prefix like all the other options, so
@@ -76,6 +78,9 @@ Then compile your project and run it:
 mvn test-compile jshell:run
 ```
 
+This starts a JShell session with your project's classes and dependencies available. Type `/exit` to leave it, or
+`/help` to see the JShell commands.
+
 Or without declaring it, use the full coordinates:
 
 ```shell
@@ -93,6 +98,22 @@ plugin directly:
 
 ```shell
 mvn jshell:run
+```
+
+## Scripts
+
+Use `scripts` to load JShell scripts (snippets and commands) when JShell starts. They are loaded in order into the same
+session, so a script can use anything declared by the scripts before it. You then get the normal JShell prompt:
+
+```shell
+mvn jshell:run -Djshell.scripts="setup.jsh,more.jsh"
+```
+
+To run the scripts and exit without starting an interactive session, for example in a CI build, set `interactive` to
+`false`:
+
+```shell
+mvn jshell:run -Djshell.scripts="setup.jsh,more.jsh" -Djshell.interactive=false
 ```
 
 ## Multi-module projects
@@ -132,19 +153,19 @@ mvn test-compile jshell:run -pl '!my-parent,!my-other-module'
 
 ## Options
 
-| Name                | Description                                                         | Default value |
-|---------------------|---------------------------------------------------------------------|---------------|
-| class-path          | Explicitly set JShell's class path                                  |               |
-| module-path         | Set JShell's module path                                            |               |
-| add-modules         | Add modules from JShell's module path                               |               |
-| add-exports         | Explicitly add exports                                              |               |
-| scripts             | Add startup scripts to JShell                                       |               |
-| useProjectClasspath | Use the project class path in JShell                                | `true`        |
-| runtimeClasspath    | Add `./target/classes` to the class path                            | `false`       |
-| testClasspath       | Add `./target/test-classes` to the class path                       | `true`        |
-| properties          | Configure Java properties                                           |               |
-| options             | Add other options to JShell, see the [JShell options][jshell-opts]  |               |
-| interactive         | If `false`, execute scripts and exit                                | `true`        |
+| Name                | Description                                                                        | Default value |
+|---------------------|------------------------------------------------------------------------------------|---------------|
+| class-path          | Explicitly set JShell's class path                                                 |               |
+| module-path         | Set JShell's module path                                                           |               |
+| add-modules         | Add modules from JShell's module path                                              |               |
+| add-exports         | Explicitly add exports                                                             |               |
+| scripts             | Scripts to load, in order, into the same session, see [Scripts](#scripts)          |               |
+| useProjectClasspath | Use the project class path in JShell                                               | `true`        |
+| runtimeClasspath    | Add the project's runtime class path: its classes and runtime dependencies         | `false`       |
+| testClasspath       | Add the project's test class path: its test classes, main classes and dependencies | `true`        |
+| properties          | System properties for the code running in JShell, set in the POM, see below        |               |
+| options             | Add other options to JShell, see the [JShell options][jshell-opts]                 |               |
+| interactive         | If `false`, run the scripts and exit instead of starting a session                 | `true`        |
 
 [jshell-opts]: https://docs.oracle.com/en/java/javase/25/docs/specs/man/jshell.html#options-for-jshell
 
@@ -154,6 +175,19 @@ All options are prefixed with `jshell.` when passed on the command line, for exa
 mvn jshell:run -Djshell.scripts="script0,script1"
 ```
 
-The only exception is `properties`, which can only be set in the POM.
+The only exception is `properties`, which can only be set in the POM. Each element becomes a system property for the
+code running in JShell:
 
-Requires Java 17 or later.
+```xml
+<plugin>
+  <groupId>org.kiwiproject</groupId>
+  <artifactId>jshell-maven-plugin</artifactId>
+  <configuration>
+    <properties>
+      <user.timezone>UTC</user.timezone>
+    </properties>
+  </configuration>
+</plugin>
+```
+
+Requires Java 17 or later and Maven 3.6.3 or later.
