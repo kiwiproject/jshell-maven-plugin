@@ -48,7 +48,7 @@ upstream and which we have included here.
 * The Java package changed from `com.github.johnpoth.jshell` to `org.kiwiproject.jshell`, and `module-info.java` was
   removed in favor of an `Automatic-Module-Name` of `org.kiwiproject.jshell`.
 * Multi-module builds respect `-pl`. Without it, JShell is started once for each module, as before.
-* A new `non-interactive` option runs scripts and then exits.
+* A new `interactive` option, which is `true` by default, can be set to `false` to run scripts and then exit.
 * The undocumented `rcp` and `trcp` properties were removed. The project's runtime and test class path elements are
   now read-only. Use `class-path` to add your own entries.
 * The `runtimeClasspath` and `testClasspath` properties now have the `jshell.` prefix like all the other options, so
@@ -144,7 +144,7 @@ mvn test-compile jshell:run -pl '!my-parent,!my-other-module'
 | testClasspath       | Add `./target/test-classes` to the class path                       | `true`        |
 | properties          | Configure Java properties                                           |               |
 | options             | Add other options to JShell, see the [JShell options][jshell-opts]  |               |
-| non-interactive     | If `true`, execute scripts and exit                                 | `false`       |
+| interactive         | If `false`, execute scripts and exit                                | `true`        |
 
 [jshell-opts]: https://docs.oracle.com/en/java/javase/25/docs/specs/man/jshell.html#options-for-jshell
 

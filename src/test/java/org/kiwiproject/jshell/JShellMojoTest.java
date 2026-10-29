@@ -67,7 +67,7 @@ class JShellMojoTest {
         set("pluginArtifacts", List.of());
         set("useProjectClasspath", true);
         set("testClasspath", true);
-        set("nonInteractive", true);
+        set("interactive", false);
     }
 
     @AfterEach

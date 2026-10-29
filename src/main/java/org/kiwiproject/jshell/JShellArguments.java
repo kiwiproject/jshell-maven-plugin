@@ -13,7 +13,8 @@ import java.util.Map;
  * @param addExports     the exports to add, or null
  * @param options        additional options
  * @param properties     Java properties, or null
- * @param nonInteractive whether to read the scripts from standard input instead of passing them as arguments
+ * @param interactive    whether JShell is interactive; if false, the scripts are read from standard input instead of
+ *                       being passed as arguments
  * @param scripts        the startup scripts
  */
 record JShellArguments(String classpath,
@@ -22,7 +23,7 @@ record JShellArguments(String classpath,
                        String addExports,
                        List<String> options,
                        Map<String, String> properties,
-                       boolean nonInteractive,
+                       boolean interactive,
                        List<String> scripts) {
 
     String[] toArray() {
@@ -50,10 +51,10 @@ record JShellArguments(String classpath,
             properties.forEach((key, value) -> args.add("-R -D" + key + "=" + value));
         }
 
-        if (nonInteractive) {
-            args.add("-");
-        } else {
+        if (interactive) {
             args.addAll(scripts);
+        } else {
+            args.add("-");
         }
 
         return args.toArray(new String[0]);

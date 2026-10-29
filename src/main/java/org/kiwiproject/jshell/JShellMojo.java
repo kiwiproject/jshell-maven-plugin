@@ -86,8 +86,8 @@ public class JShellMojo extends AbstractMojo {
     @Parameter
     private Map<String, String> properties;
 
-    @Parameter(property = "jshell.non-interactive")
-    private boolean nonInteractive = false;
+    @Parameter(defaultValue = "true", property = "jshell.interactive")
+    private boolean interactive = true;
 
     @Parameter(
         defaultValue = "${session}",
@@ -108,14 +108,14 @@ public class JShellMojo extends AbstractMojo {
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             classLoader.ifPresent(cl -> Thread.currentThread().setContextClassLoader(cl));
-            if (nonInteractive) {
-                try (InputStream scriptInput = ScriptInput.sequence(scripts, getLog())) {
-                    runJShell(scriptInput);
-                }
-            } else {
+            if (interactive) {
                 // Standard input must stay open and be passed to JShell as-is. Closing it would leave every
                 // later module in a multi-module build without any input.
                 runJShell(System.in);
+            } else {
+                try (InputStream scriptInput = ScriptInput.sequence(scripts, getLog())) {
+                    runJShell(scriptInput);
+                }
             }
         } catch (IOException e) {
             throw new MojoExecutionException("Unable to read input script file(s)", e);
@@ -180,7 +180,7 @@ public class JShellMojo extends AbstractMojo {
                 getLog().debug("Using classpath: " + cp);
             }
         }
-        return new JShellArguments(cp, modulepath, addModules, addExports, options, properties, nonInteractive, scripts)
+        return new JShellArguments(cp, modulepath, addModules, addExports, options, properties, interactive, scripts)
                 .toArray();
     }
 }
