@@ -146,7 +146,7 @@ mvn test-compile jshell:run -pl '!my-parent,!my-other-module'
 | options             | Add other options to JShell, see the [JShell options][jshell-opts]  |               |
 | non-interactive     | If `true`, execute scripts and exit                                 | `false`       |
 
-[jshell-opts]: https://docs.oracle.com/javase/9/tools/jshell.htm#GUID-C337353B-074A-431C-993F-60C226163F00__OPTIONSFORJSHELL-AF4AC615
+[jshell-opts]: https://docs.oracle.com/en/java/javase/25/docs/specs/man/jshell.html#options-for-jshell
 
 All options are prefixed with `jshell.` when passed on the command line, for example:
 
