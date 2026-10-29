@@ -16,36 +16,36 @@ class JShellArgumentsTest {
                                         String addExports,
                                         List<String> options,
                                         Map<String, String> properties,
-                                        boolean nonInteractive,
+                                        boolean interactive,
                                         List<String> scripts) {
-        return new JShellArguments(classpath, modulePath, addModules, addExports, options, properties, nonInteractive, scripts);
+        return new JShellArguments(classpath, modulePath, addModules, addExports, options, properties, interactive, scripts);
     }
 
     @Test
     void shouldBeEmpty_WhenNothingIsConfigured() {
-        assertThat(args(null, null, null, null, List.of(), null, false, List.of()).toArray()).isEmpty();
+        assertThat(args(null, null, null, null, List.of(), null, true, List.of()).toArray()).isEmpty();
     }
 
     @Test
     void shouldNotAddClasspath_WhenItIsEmpty() {
-        assertThat(args("", null, null, null, List.of(), null, false, List.of()).toArray()).isEmpty();
+        assertThat(args("", null, null, null, List.of(), null, true, List.of()).toArray()).isEmpty();
     }
 
     @Test
     void shouldAddClasspath() {
-        assertThat(args("a.jar:b.jar", null, null, null, List.of(), null, false, List.of()).toArray())
+        assertThat(args("a.jar:b.jar", null, null, null, List.of(), null, true, List.of()).toArray())
                 .containsExactly("--class-path", "a.jar:b.jar");
     }
 
     @Test
     void shouldAddModulePathAddModulesAndAddExportsInThatOrder() {
-        assertThat(args(null, "mods", "m1,m2", "m1/p=m2", List.of(), null, false, List.of()).toArray())
+        assertThat(args(null, "mods", "m1,m2", "m1/p=m2", List.of(), null, true, List.of()).toArray())
                 .containsExactly("--module-path", "mods", "--add-modules", "m1,m2", "--add-exports", "m1/p=m2");
     }
 
     @Test
     void shouldAddOptionsAsIs() {
-        assertThat(args(null, null, null, null, List.of("--enable-preview", "-s"), null, false, List.of()).toArray())
+        assertThat(args(null, null, null, null, List.of("--enable-preview", "-s"), null, true, List.of()).toArray())
                 .containsExactly("--enable-preview", "-s");
     }
 
@@ -55,25 +55,25 @@ class JShellArgumentsTest {
         properties.put("user.language", "fr");
         properties.put("debug", "true");
 
-        assertThat(args(null, null, null, null, List.of(), properties, false, List.of()).toArray())
+        assertThat(args(null, null, null, null, List.of(), properties, true, List.of()).toArray())
                 .containsExactly("-R -Duser.language=fr", "-R -Ddebug=true");
     }
 
     @Test
     void shouldAddScripts_WhenInteractive() {
-        assertThat(args(null, null, null, null, List.of(), null, false, List.of("a.jsh", "b.jsh")).toArray())
+        assertThat(args(null, null, null, null, List.of(), null, true, List.of("a.jsh", "b.jsh")).toArray())
                 .containsExactly("a.jsh", "b.jsh");
     }
 
     @Test
-    void shouldReadFromStandardInputInsteadOfAddingScripts_WhenNonInteractive() {
-        assertThat(args(null, null, null, null, List.of(), null, true, List.of("a.jsh", "b.jsh")).toArray())
+    void shouldReadFromStandardInputInsteadOfAddingScripts_WhenNotInteractive() {
+        assertThat(args(null, null, null, null, List.of(), null, false, List.of("a.jsh", "b.jsh")).toArray())
                 .containsExactly("-");
     }
 
     @Test
     void shouldAddEverythingInOrder() {
-        var args = args("cp", "mp", "am", "ae", List.of("--enable-preview"), Map.of("k", "v"), false, List.of("a.jsh"));
+        var args = args("cp", "mp", "am", "ae", List.of("--enable-preview"), Map.of("k", "v"), true, List.of("a.jsh"));
 
         assertThat(args.toArray()).containsExactly(
                 "--class-path", "cp",
