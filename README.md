@@ -51,6 +51,8 @@ upstream and which we have included here.
 * A new `non-interactive` option runs scripts and then exits.
 * The undocumented `rcp` and `trcp` properties were removed. The project's runtime and test class path elements are
   now read-only. Use `class-path` to add your own entries.
+* The `runtimeClasspath` and `testClasspath` properties now have the `jshell.` prefix like all the other options, so
+  `-DtestClasspath` is now `-Djshell.testClasspath`.
 
 ## Usage
 
@@ -144,15 +146,14 @@ mvn test-compile jshell:run -pl '!my-parent,!my-other-module'
 | options             | Add other options to JShell, see the [JShell options][jshell-opts]  |               |
 | non-interactive     | If `true`, execute scripts and exit                                 | `false`       |
 
-[jshell-opts]: https://docs.oracle.com/javase/9/tools/jshell.htm#GUID-C337353B-074A-431C-993F-60C226163F00__OPTIONSFORJSHELL-AF4AC615
+[jshell-opts]: https://docs.oracle.com/en/java/javase/25/docs/specs/man/jshell.html#options-for-jshell
 
-Most options are prefixed with `jshell.` when passed on the command line, for example:
+All options are prefixed with `jshell.` when passed on the command line, for example:
 
 ```shell
 mvn jshell:run -Djshell.scripts="script0,script1"
 ```
 
-The exceptions are `runtimeClasspath` and `testClasspath`, which are passed as `-DruntimeClasspath` and
-`-DtestClasspath`.
+The only exception is `properties`, which can only be set in the POM.
 
 Requires Java 17 or later.

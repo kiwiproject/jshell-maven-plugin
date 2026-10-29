@@ -50,10 +50,10 @@ public class JShellMojo extends AbstractMojo {
     @Parameter(property = "plugin.artifacts", required = true, readonly = true)
     private List<Artifact> pluginArtifacts;
 
-    @Parameter(defaultValue = "false", property = "runtimeClasspath")
+    @Parameter(defaultValue = "false", property = "jshell.runtimeClasspath")
     private boolean runtimeClasspath;
 
-    @Parameter(defaultValue = "true", property = "testClasspath")
+    @Parameter(defaultValue = "true", property = "jshell.testClasspath")
     private boolean testClasspath;
 
     @Parameter(defaultValue = "true", property = "jshell.useProjectClasspath")
