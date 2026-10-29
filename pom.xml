@@ -7,7 +7,7 @@
     <version>2.0.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
-    <name>jshell-maven-plugin Maven Plugin</name>
+    <name>${project.groupId}:${project.artifactId}</name>
     <description>JShell Maven Plugin</description>
     <url>https://github.com/kiwiproject/jshell-maven-plugin</url>
     <licenses>
