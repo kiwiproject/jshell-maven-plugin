@@ -49,6 +49,8 @@ upstream and which we have included here.
   removed in favor of an `Automatic-Module-Name` of `org.kiwiproject.jshell`.
 * Multi-module builds respect `-pl`. Without it, JShell is started once for each module, as before.
 * A new `non-interactive` option runs scripts and then exits.
+* The undocumented `rcp` and `trcp` properties were removed. The project's runtime and test class path elements are
+  now read-only. Use `class-path` to add your own entries.
 
 ## Usage
 

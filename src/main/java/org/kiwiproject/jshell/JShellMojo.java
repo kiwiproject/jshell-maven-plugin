@@ -41,10 +41,10 @@ import java.util.stream.Collectors;
 @Mojo(name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST)
 public class JShellMojo extends AbstractMojo {
 
-    @Parameter(defaultValue = "${project.runtimeClasspathElements}", property = "rcp", required = true)
+    @Parameter(defaultValue = "${project.runtimeClasspathElements}", readonly = true, required = true)
     private List<String> runtimeClasspathElements;
 
-    @Parameter(defaultValue = "${project.testClasspathElements}", property = "trcp", required = true)
+    @Parameter(defaultValue = "${project.testClasspathElements}", readonly = true, required = true)
     private List<String> testClasspathElements;
 
     @Parameter(property = "plugin.artifacts", required = true, readonly = true)
