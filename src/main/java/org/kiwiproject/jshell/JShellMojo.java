@@ -27,25 +27,16 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
 import javax.tools.Tool;
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.SequenceInputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
-
-import static java.util.Optional.ofNullable;
-
 
 @Mojo(name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST)
 public class JShellMojo extends AbstractMojo {
@@ -115,19 +106,16 @@ public class JShellMojo extends AbstractMojo {
         Optional<ClassLoader> classLoader = module.map(Module::getClassLoader);
         // Until https://issues.apache.org/jira/browse/MNG-6371 is resolved
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        try (InputStream input = getInputStream()) {
+        try {
             classLoader.ifPresent(cl -> Thread.currentThread().setContextClassLoader(cl));
-            ServiceLoader<Tool> sl = ServiceLoader.load(javax.tools.Tool.class);
-            Tool jshell = sl.stream()
-                    .filter(a -> a.get().name().equals("jshell"))
-                    .findAny()
-                    .orElseThrow(() -> new RuntimeException("No JShell service providers found!"))
-                    .get();
-            String[] args = addArguments();
-
-            int exitCode = jshell.run(input, System.out, System.err, args);
-            if (exitCode != 0) {
-                throw new MojoExecutionException("An error was encountered while executing. Exit code:" + exitCode);
+            if (nonInteractive) {
+                try (InputStream scriptInput = ScriptInput.sequence(scripts, getLog())) {
+                    runJShell(scriptInput);
+                }
+            } else {
+                // Standard input must stay open and be passed to JShell as-is. Closing it would leave every
+                // later module in a multi-module build without any input.
+                runJShell(System.in);
             }
         } catch (IOException e) {
             throw new MojoExecutionException("Unable to read input script file(s)", e);
@@ -136,70 +124,31 @@ public class JShellMojo extends AbstractMojo {
         }
     }
 
-    private InputStream getInputStream() {
-        if (nonInteractive) {
-            if (getLog().isDebugEnabled()) {
-                getLog().debug("Non-interactive mode. inject script in stdin:" + String.join(", ", scripts));
-            }
-            return new SequenceInputStream(Collections.enumeration(
-                    scripts.stream()
-                            .map(this::scriptToInputStream)
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toList())
-            ));
-        } else {
-            return System.in;
+    private void runJShell(InputStream input) throws MojoExecutionException {
+        ServiceLoader<Tool> sl = ServiceLoader.load(javax.tools.Tool.class);
+        Tool jshell = sl.stream()
+                .filter(a -> a.get().name().equals("jshell"))
+                .findAny()
+                .orElseThrow(() -> new RuntimeException("No JShell service providers found!"))
+                .get();
+        String[] args = addArguments();
+
+        int exitCode = jshell.run(input, System.out, System.err, args);
+        if (exitCode != 0) {
+            throw new MojoExecutionException("An error was encountered while executing. Exit code: " + exitCode);
         }
     }
 
-    private InputStream scriptToInputStream(String scriptPath) {
-        final Path path = Path.of(scriptPath);
-        if (!Files.isRegularFile(path)) {
-            if (getLog().isDebugEnabled()) {
-                getLog().debug("Not a regular file: " + scriptPath);
-            }
-            return null;
-        }
-        try {
-            return new BufferedInputStream(Files.newInputStream(path));
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Unable to read input script file(s)", e);
-        }
-    }
-
-    /**
-     * Whether the current project is selected by the {@code -pl} option, or {@code -pl} was not used.
-     * <p>
-     * Each {@code -pl} entry can be {@code :artifactId}, {@code groupId:artifactId}, or a path relative
-     * to the root of the multi-module project. Entries can have a {@code ?} prefix (optional); entries
-     * with a {@code !} prefix are exclusions, which Maven already applies to the reactor, so they are ignored.
-     */
     private boolean isSelectedByProjectList() {
-        List<String> selectors = session.getRequest().getSelectedProjects().stream()
-                .map(String::trim)
-                .map(selector -> selector.startsWith("?") ? selector.substring(1) : selector)
-                .filter(selector -> !selector.isEmpty() && !selector.startsWith("!"))
-                .collect(Collectors.toList());
-        if (selectors.isEmpty()) {
-            return true;
-        }
-
         MavenProject project = session.getCurrentProject();
-        String artifactId = project.getArtifactId();
-        String groupId = project.getGroupId();
-        Path projectDir = project.getBasedir() == null ? null : project.getBasedir().toPath().toAbsolutePath().normalize();
+        File pomFile = project.getFile();
         File rootDir = session.getRequest().getMultiModuleProjectDirectory();
-
-        return selectors.stream().anyMatch(selector -> {
-            if (selector.equals(artifactId) || selector.equals(":" + artifactId) || selector.equals(groupId + ":" + artifactId)) {
-                return true;
-            }
-            if (projectDir == null || rootDir == null) {
-                return false;
-            }
-            Path selectedDir = rootDir.toPath().resolve(selector).toAbsolutePath().normalize();
-            return selectedDir.equals(projectDir) || selectedDir.resolve("pom.xml").equals(projectDir.resolve("pom.xml"));
-        });
+        return ProjectSelector.isSelected(
+                session.getRequest().getSelectedProjects(),
+                project.getGroupId(),
+                project.getArtifactId(),
+                pomFile == null ? null : pomFile.toPath(),
+                rootDir == null ? null : rootDir.toPath());
     }
 
     private String buildClasspath() {
@@ -220,73 +169,18 @@ public class JShellMojo extends AbstractMojo {
                             .collect(Collectors.toList())
             );
         }
-        return filterClasspath(classpathElements).stream()
-                .reduce("", (a, b) -> a + File.pathSeparator + b);
-    }
-
-    private List<String> filterClasspath(List<String> cp) {
-        return cp.stream()
-                .filter(s -> {
-                    Path path = Path.of(s);
-                    if (Files.notExists(path)) {
-                        getLog().info(String.format(
-                                "Removing: %s from the classpath.%n" +
-                                        "If this is unexpected, please make sure you correctly build the project beforehand by invoking the correct Maven build phase (usually `install`, `test-compile` or `compile`). For example:%n" +
-                                        "mvn test-compile org.kiwiproject:jshell-maven-plugin:%s:run%n" +
-                                        "For more information visit https://github.com/kiwiproject/jshell-maven-plugin",
-                                s,
-                                ofNullable(this.getClass().getPackage().getImplementationVersion()).orElse("RELEASE")
-                        ));
-                        return false;
-                    }
-                    if (Files.isDirectory(path)) {
-                        return true;
-                    }
-                    if (s.endsWith(".jar")) {
-                        return true;
-                    }
-                    if (getLog().isDebugEnabled()) {
-                        getLog().debug("Removing: " + s + " from the classpath because it is unsupported in JShell.");
-                    }
-                    return false;
-                }).collect(Collectors.toList());
+        return String.join(File.pathSeparator, ClasspathFilter.filter(classpathElements, getLog()));
     }
 
     private String[] addArguments() {
-        List<String> args = new ArrayList<>();
+        String cp = null;
         if (useProjectClasspath) {
-            String cp = buildClasspath();
+            cp = buildClasspath();
             if (getLog().isDebugEnabled()) {
                 getLog().debug("Using classpath: " + cp);
             }
-            args.add("--class-path");
-            args.add(cp);
         }
-        if (modulepath != null) {
-            args.add("--module-path");
-            args.add(modulepath);
-        }
-        if (addModules != null) {
-            args.add("--add-modules");
-            args.add(addModules);
-        }
-        if (addExports != null) {
-            args.add("--add-exports");
-            args.add(addExports);
-        }
-
-        args.addAll(this.options);
-
-        if (this.properties != null) {
-            this.properties.forEach((key, value) -> args.add("-R -D" + key + "=" + value));
-        }
-
-        if (nonInteractive) {
-            args.add("-");
-        } else {
-            args.addAll(scripts);
-        }
-
-        return args.toArray(new String[0]);
+        return new JShellArguments(cp, modulepath, addModules, addExports, options, properties, nonInteractive, scripts)
+                .toArray();
     }
 }
