@@ -8,7 +8,7 @@
 
 ---
 
-🥝 _This README will be updated as we transition from johnpoth/jshell-maven-plugin to this repository._ 🥝
+🥝 _We have now transitioned jshell-maven-plugin from johnpoth to kiwiproject. It is released to Maven Central. See the [releases](https://github.com/kiwiproject/jshell-maven-plugin/releases) for more information._ 🥝
 
 ---
 
