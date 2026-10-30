@@ -14,7 +14,7 @@
 
 ## Introduction
 
-A Maven plugin for the Java Shell tool ([JShell](https://docs.oracle.com/en/java/javase/17/jshell/introduction-jshell.html)).
+A Maven plugin for the Java Shell tool ([JShell](https://docs.oracle.com/en/java/javase/25/jshell/introduction-jshell.html)).
 It starts JShell with your project's classpath, so you can try out your own classes and dependencies interactively.
 
 ## Background
@@ -168,6 +168,8 @@ mvn test-compile jshell:run -pl '!my-parent,!my-other-module'
 | interactive         | If `false`, run the scripts and exit instead of starting a session                 | `true`        |
 
 [jshell-opts]: https://docs.oracle.com/en/java/javase/25/docs/specs/man/jshell.html#options-for-jshell
+
+The JShell options you can pass in `options` depend on the JDK you run Maven with.
 
 All options are prefixed with `jshell.` when passed on the command line, for example:
 
