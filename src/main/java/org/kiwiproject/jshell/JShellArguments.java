@@ -50,7 +50,7 @@ record JShellArguments(String classpath,
         args.addAll(options);
 
         if (nonNull(properties)) {
-            properties.forEach((key, value) -> args.add("-R -D" + key + "=" + value));
+            properties.forEach((key, value) -> args.add("-R-D" + key + "=" + value));
         }
 
         if (interactive) {

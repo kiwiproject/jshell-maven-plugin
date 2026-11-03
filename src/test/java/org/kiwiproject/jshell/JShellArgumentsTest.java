@@ -56,7 +56,7 @@ class JShellArgumentsTest {
         properties.put("debug", "true");
 
         assertThat(args(null, null, null, null, List.of(), properties, true, List.of()).toArray())
-                .containsExactly("-R -Duser.language=fr", "-R -Ddebug=true");
+                .containsExactly("-R-Duser.language=fr", "-R-Ddebug=true");
     }
 
     @Test
@@ -81,7 +81,7 @@ class JShellArgumentsTest {
                 "--add-modules", "am",
                 "--add-exports", "ae",
                 "--enable-preview",
-                "-R -Dk=v",
+                "-R-Dk=v",
                 "a.jsh");
     }
 }
