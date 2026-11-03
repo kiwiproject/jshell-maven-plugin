@@ -116,6 +116,30 @@ To run the scripts and exit without starting an interactive session, for example
 mvn jshell:run -Djshell.scripts="setup.jsh,more.jsh" -Djshell.interactive=false
 ```
 
+## Adding dependencies for your scripts
+
+Dependencies that you declare inside the plugin's own `dependencies` element are also put on JShell's class path. Use
+this for libraries that your scripts need but that your project does not depend on:
+
+```xml
+<plugin>
+  <groupId>org.kiwiproject</groupId>
+  <artifactId>jshell-maven-plugin</artifactId>
+  <version>2.0.0</version>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.17.0</version>
+    </dependency>
+  </dependencies>
+</plugin>
+```
+
+Then `import org.apache.commons.lang3.StringUtils;` works in JShell. This only works when the plugin is declared in your
+POM, since there is no way to add dependencies when running it by its full coordinates alone. The idea came from a
+contribution by jycr to the original plugin.
+
 ## Multi-module projects
 
 In a multi-module build, Maven runs the goal once for each module, so by default JShell is started once for each
