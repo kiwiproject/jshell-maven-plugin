@@ -103,7 +103,7 @@ public class JShellMojo extends AbstractMojo {
         }
         Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
         Optional<ClassLoader> classLoader = module.map(Module::getClassLoader);
-        // Until https://issues.apache.org/jira/browse/MNG-6371 is resolved
+        // Until https://github.com/apache/maven/issues/7460 (formerly MNG-6371) is resolved
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             classLoader.ifPresent(cl -> Thread.currentThread().setContextClassLoader(cl));
@@ -128,7 +128,8 @@ public class JShellMojo extends AbstractMojo {
         Tool jshell = sl.stream()
                 .filter(a -> a.get().name().equals("jshell"))
                 .findAny()
-                .orElseThrow(() -> new RuntimeException("No JShell service providers found!"))
+                .orElseThrow(() -> new MojoExecutionException(
+                        "JShell is not available in this Java runtime: no JShell service providers found"))
                 .get();
         String[] args = addArguments();
 
