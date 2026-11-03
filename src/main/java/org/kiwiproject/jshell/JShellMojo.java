@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
-import java.util.stream.Collectors;
 
 @Mojo(name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST)
 public class JShellMojo extends AbstractMojo {
@@ -125,7 +124,7 @@ public class JShellMojo extends AbstractMojo {
     }
 
     private void runJShell(InputStream input) throws MojoExecutionException {
-        ServiceLoader<Tool> sl = ServiceLoader.load(javax.tools.Tool.class);
+        ServiceLoader<Tool> sl = ServiceLoader.load(Tool.class);
         Tool jshell = sl.stream()
                 .filter(a -> a.get().name().equals("jshell"))
                 .findAny()
@@ -166,7 +165,7 @@ public class JShellMojo extends AbstractMojo {
             classpathElements.addAll(
                     pluginArtifacts.stream()
                             .map(artifact -> artifact.getFile().getAbsolutePath())
-                            .collect(Collectors.toList())
+                            .toList()
             );
         }
         return String.join(File.pathSeparator, ClasspathFilter.filter(classpathElements, getLog()));

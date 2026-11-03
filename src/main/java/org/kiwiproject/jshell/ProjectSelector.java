@@ -2,7 +2,6 @@ package org.kiwiproject.jshell;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Decides whether a project is selected by the Maven {@code -pl} (or {@code --projects}) option.
@@ -34,7 +33,7 @@ final class ProjectSelector {
                 .map(String::trim)
                 .map(selector -> selector.startsWith("?") ? selector.substring(1) : selector)
                 .filter(selector -> !selector.isEmpty() && !selector.startsWith("!"))
-                .collect(Collectors.toList());
+                .toList();
         if (selectors.isEmpty()) {
             return true;
         }
