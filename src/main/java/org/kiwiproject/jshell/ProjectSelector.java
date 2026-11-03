@@ -1,5 +1,7 @@
 package org.kiwiproject.jshell;
 
+import static java.util.Objects.isNull;
+
 import java.nio.file.Path;
 import java.util.List;
 
@@ -38,14 +40,14 @@ final class ProjectSelector {
             return true;
         }
 
-        Path normalizedProjectFile = projectFile == null ? null : projectFile.toAbsolutePath().normalize();
-        Path normalizedProjectDir = normalizedProjectFile == null ? null : normalizedProjectFile.getParent();
+        Path normalizedProjectFile = isNull(projectFile) ? null : projectFile.toAbsolutePath().normalize();
+        Path normalizedProjectDir = isNull(normalizedProjectFile) ? null : normalizedProjectFile.getParent();
 
         return selectors.stream().anyMatch(selector -> {
             if (selector.equals(":" + artifactId) || selector.equals(groupId + ":" + artifactId)) {
                 return true;
             }
-            if (normalizedProjectFile == null || rootDir == null) {
+            if (isNull(normalizedProjectFile) || isNull(rootDir)) {
                 return false;
             }
             Path selectedPath = rootDir.resolve(selector).toAbsolutePath().normalize();
