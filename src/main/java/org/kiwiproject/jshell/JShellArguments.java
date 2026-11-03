@@ -1,5 +1,7 @@
 package org.kiwiproject.jshell;
 
+import static java.util.Objects.nonNull;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,26 +30,26 @@ record JShellArguments(String classpath,
 
     String[] toArray() {
         List<String> args = new ArrayList<>();
-        if (classpath != null && !classpath.isEmpty()) {
+        if (nonNull(classpath) && !classpath.isEmpty()) {
             args.add("--class-path");
             args.add(classpath);
         }
-        if (modulePath != null) {
+        if (nonNull(modulePath)) {
             args.add("--module-path");
             args.add(modulePath);
         }
-        if (addModules != null) {
+        if (nonNull(addModules)) {
             args.add("--add-modules");
             args.add(addModules);
         }
-        if (addExports != null) {
+        if (nonNull(addExports)) {
             args.add("--add-exports");
             args.add(addExports);
         }
 
         args.addAll(options);
 
-        if (properties != null) {
+        if (nonNull(properties)) {
             properties.forEach((key, value) -> args.add("-R -D" + key + "=" + value));
         }
 

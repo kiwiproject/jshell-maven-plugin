@@ -16,6 +16,11 @@
  */
 package org.kiwiproject.jshell;
 
+import static java.io.File.pathSeparator;
+import static java.util.Arrays.asList;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -31,7 +36,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -147,8 +151,8 @@ public class JShellMojo extends AbstractMojo {
                 session.getRequest().getSelectedProjects(),
                 project.getGroupId(),
                 project.getArtifactId(),
-                pomFile == null ? null : pomFile.toPath(),
-                rootDir == null ? null : rootDir.toPath());
+                isNull(pomFile) ? null : pomFile.toPath(),
+                isNull(rootDir) ? null : rootDir.toPath());
     }
 
     private String buildClasspath() {
@@ -159,8 +163,8 @@ public class JShellMojo extends AbstractMojo {
         if (runtimeClasspath) {
             classpathElements.addAll(runtimeClasspathElements);
         }
-        if (classpath != null) {
-            classpathElements.addAll(Arrays.asList(classpath.split(File.pathSeparator)));
+        if (nonNull(classpath)) {
+            classpathElements.addAll(asList(classpath.split(pathSeparator)));
         }
         if (!pluginArtifacts.isEmpty()) {
             classpathElements.addAll(
