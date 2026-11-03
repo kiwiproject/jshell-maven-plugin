@@ -1,13 +1,12 @@
 package org.kiwiproject.jshell;
 
+import static java.util.Optional.ofNullable;
+
 import org.apache.maven.plugin.logging.Log;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static java.util.Optional.ofNullable;
 
 /**
  * Removes classpath elements that JShell cannot use.
@@ -45,6 +44,6 @@ final class ClasspathFilter {
                         log.debug("Removing: " + s + " from the classpath because it is unsupported in JShell.");
                     }
                     return false;
-                }).collect(Collectors.toList());
+                }).toList();
     }
 }
