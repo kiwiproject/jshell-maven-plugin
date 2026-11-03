@@ -38,7 +38,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.ServiceLoader;
 
 @Mojo(name = "run", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST, requiresDependencyCollection = ResolutionScope.TEST)
@@ -105,12 +104,12 @@ public class JShellMojo extends AbstractMojo {
             getLog().debug("Skipping JShell for: " + session.getCurrentProject().getArtifactId());
             return;
         }
-        Optional<Module> module = ModuleLayer.boot().findModule("jdk.jshell");
-        Optional<ClassLoader> classLoader = module.map(Module::getClassLoader);
-        // Until https://github.com/apache/maven/issues/7460 (formerly MNG-6371) is resolved
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         try {
-            classLoader.ifPresent(cl -> Thread.currentThread().setContextClassLoader(cl));
+            // Until https://github.com/apache/maven/issues/7460 (formerly MNG-6371) is resolved
+            ModuleLayer.boot().findModule("jdk.jshell")
+                    .map(Module::getClassLoader)
+                    .ifPresent(cl -> Thread.currentThread().setContextClassLoader(cl));
             if (interactive) {
                 // Standard input must stay open and be passed to JShell as-is. Closing it would leave every
                 // later module in a multi-module build without any input.
