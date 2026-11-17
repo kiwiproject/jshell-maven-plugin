@@ -116,6 +116,10 @@ To run the scripts and exit without starting an interactive session, for example
 mvn jshell:run -Djshell.scripts="setup.jsh,more.jsh" -Djshell.interactive=false
 ```
 
+When `interactive` is `false`, a script can fail the build by ending JShell with a non-zero exit code, using the JShell
+command `/exit 1`. The build then fails with that exit code. An exception thrown by a snippet does not fail the build:
+JShell reports it and carries on with the rest of the script.
+
 ## Adding dependencies for your scripts
 
 Dependencies that you declare inside the plugin's own `dependencies` element are also put on JShell's class path. Use
@@ -194,6 +198,23 @@ mvn test-compile jshell:run -pl '!my-parent,!my-other-module'
 [jshell-opts]: https://docs.oracle.com/en/java/javase/25/docs/specs/man/jshell.html#options-for-jshell
 
 The JShell options you can pass in `options` depend on the JDK you run Maven with.
+
+For example, use `options` to enable preview features. On the command line, separate several options with commas
+(a value containing spaces is passed to JShell as a single option, which JShell rejects):
+
+```shell
+mvn jshell:run -Djshell.options="--enable-preview,--add-modules,java.sql"
+```
+
+In the POM, use one `option` element for each:
+
+```xml
+<configuration>
+  <options>
+    <option>--enable-preview</option>
+  </options>
+</configuration>
+```
 
 All options are prefixed with `jshell.` when passed on the command line, for example:
 
